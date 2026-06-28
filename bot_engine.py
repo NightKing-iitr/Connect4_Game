@@ -19,16 +19,19 @@ class BotEngine:
         if not legal_columns:
             return -1
 
+        # Bot plays the immediate winning move  
         for column in self._ordered_columns(game_board):
             if self._would_win(game_board, column, self.bot_color):
                 return column
 
+        # Block the human player immediate winning move on next turn
         for column in self._ordered_columns(game_board):
             if self._would_win(game_board, column, self.opponent_color):
                 return column
 
         return self._get_minimax_move(game_board)
 
+    # Return the best possible move based on 'Minimax' algorithm
     def _get_minimax_move(self, game_board: Board) -> int:
         best_score = float("-inf")
         best_move = -1
@@ -46,9 +49,11 @@ class BotEngine:
 
         return best_move
 
+    # Sort the possible available columns by its closeness to the center
     def _ordered_columns(self, game_board: Board) -> list[int]:
         center = game_board.cols // 2
-        return sorted([column for column in range(game_board.cols) if game_board._canPlace(column)], key=lambda column: abs(column - center))
+        return sorted([column for column in range(game_board.cols) 
+                       if game_board._canPlace(column)], key=lambda column: abs(column - center))
 
     def _clone_board(self, board: Board) -> Board:
         board_copy = Board(board.rows, board.cols)
@@ -74,6 +79,7 @@ class BotEngine:
 
         ordered_columns = self._ordered_columns(board)
 
+        # Bot trying to maximize the score
         if is_maximizing:
             best_score = float("-inf")
             for column in ordered_columns:
@@ -87,11 +93,12 @@ class BotEngine:
 
                 score = self._minimax(board_copy, depth - 1, False, alpha, beta)
                 best_score = max(best_score, score)
-                alpha = max(alpha, score)
+                alpha = max(alpha, score) # alpha-beta pruning
                 if beta <= alpha:
                     break
             return best_score
 
+        # Human opponent trying to minimize the score 
         best_score = float("inf")
         for column in ordered_columns:
             board_copy = self._clone_board(board)
@@ -104,11 +111,17 @@ class BotEngine:
 
             score = self._minimax(board_copy, depth - 1, True, alpha, beta)
             best_score = min(best_score, score)
-            beta = min(beta, score)
+            beta = min(beta, score) # alpha-beta pruning
             if beta <= alpha:
                 break
         return best_score
 
+    """
+    Heuristic function
+        - prefer positions that create winning opportunities for bot
+        - penalize positions that create winning opportunities for the human
+        - favour central control
+    """
     def _evaluate_board(self, board: Board) -> float:
         score = 0.0
 
