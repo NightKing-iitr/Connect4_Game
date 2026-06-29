@@ -71,3 +71,4 @@ assert game.makeMove(p2, 5) == False
 
 # Display game board
 game.board.display_grid()
+print()

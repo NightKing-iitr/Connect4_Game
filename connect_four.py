@@ -229,15 +229,15 @@ class Game:
 
         if self.board.isFull():
             self.__state = GameState.DRAW
-            return False
+            return True
         
         # Switch turn
         if self.currentPlayer == self.player1:
             self.__currentPlayer = self.player2
         else: 
             self.__currentPlayer = self.player1
-
-        return False
+        
+        return True
 
 class Board:
     def __init__(self, rows: int = 6, cols: int = 7) -> None:
@@ -298,7 +298,7 @@ class Board:
             return -1
 
         for row in range(self.rows - 1, -1, -1):
-            if not self.__grid[row][column]:
+            if self.__grid[row][column] is None:
                 self.__grid[row][column] = color
                 return row
         return -1 
