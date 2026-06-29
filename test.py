@@ -62,13 +62,37 @@ game.makeMove(p1, 4)
 game.makeMove(p2, 4)
 game.makeMove(p1, 5)
 
-# Validate check win
+# Validate GameState 'WIN'
 assert game.state == GameState.WON
 assert game.winner == p1
+assert game.makeMove(p2, 5) == False # No valid moves post game ends 
 
-# Validate no player moves after game end 
-assert game.makeMove(p2, 5) == False
+print("Win state validated successfully.")
+game.board.display_grid() # Display game board 
+print()
 
-# Display game board
-game.board.display_grid()
+
+
+# Validate GameState 'DRAW'
+draw_game = Game(Player("DrawPlayer1", DiscColor.RED), Player("DrawPlayer2", DiscColor.BLUE))
+draw_moves = [
+    0, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 1, 
+    2, 2, 2, 2, 2, 2, 
+    4, 3, 3, 3, 3, 3, 
+    3, 4, 4, 4, 4, 4, 
+    5, 5, 5, 5, 5, 5, 
+    6, 6, 6, 6, 6, 6
+]
+
+for col in draw_moves:
+    assert draw_game.makeMove(draw_game.currentPlayer, col) == True
+
+assert draw_game.state == GameState.DRAW
+assert draw_game.winner is None
+assert draw_game.board.isFull() == True
+assert draw_game.makeMove(draw_game.currentPlayer, 0) == False
+
+print("Draw state validated successfully.")
+draw_game.board.display_grid()
 print()
