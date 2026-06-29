@@ -153,16 +153,35 @@ class Player:
 
 class Game:
     def __init__(self, player1: Player, player2: Player) -> None:
-        self.__board = Board()
+        self._validate_players(player1, player2)
+        
+        self.__player1 = player1
+        self.__player2 = player2
 
-        self.player1 = player1
-        self.player2 = player2
         self.__currentPlayer = player1 # Player1 makes the first move
+
+        self.__board = Board()
 
         self.__state = GameState.IN_PROGRESS
 
         self.__winner: Optional[Player] = None # Player is null in case of draw or in_progress
     
+    @staticmethod
+    def _validate_players(player1: Player, player2: Player):
+        if player1 is player2:
+            raise ValueError("Players must be different.")
+        
+        if player1.color == player2.color:
+            raise ValueError("Players must chose different colors.") 
+
+    @property
+    def player1(self):
+        return self.__player1
+    
+    @property
+    def player2(self):
+        return self.__player2
+
     @property
     def winner(self):
         return self.__winner

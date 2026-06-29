@@ -13,6 +13,17 @@ try:
 except ValueError:
     print("Player 'empty name' rejected successfully.", "\n")
 
+# Validate players creation: p1, p2
+try:
+    game = Game(p1, p1)
+except ValueError:
+    print("Same players rejected by the Game successfully.")
+
+try: 
+    game = Game(p1, Player("p3", DiscColor.RED))
+except ValueError:
+    print("Same colors chosen by both players rejected successfully.", "\n")
+
 # Game start
 game = Game(p1, p2)
 
