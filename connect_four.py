@@ -268,6 +268,14 @@ class Board:
                     colored_row.append("0")
             print(" ".join(colored_row))
 
+    def copy(self) -> 'Board':
+        """Return an independent deep copy of this board."""
+        clone = Board(self.__rows, self.__cols)
+        for r in range(self.__rows):
+            for c in range(self.__cols):
+                clone.__grid[r][c] = self.__grid[r][c]
+        return clone
+
     def _in_bounds(self, r, c):
         if (
             r < 0 or r >= self.rows or 

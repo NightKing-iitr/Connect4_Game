@@ -56,11 +56,7 @@ class BotEngine:
                        if game_board._canPlace(column)], key=lambda column: abs(column - center))
 
     def _clone_board(self, board: Board) -> Board:
-        board_copy = Board(board.rows, board.cols)
-        for row in range(board.rows):
-            for column in range(board.cols):
-                board_copy.grid[row][column] = board.grid[row][column]
-        return board_copy
+        return board.copy()
 
     def _would_win(self, board: Board, column: int, color: DiscColor) -> bool:
         board_copy = self._clone_board(board)
@@ -126,14 +122,14 @@ class BotEngine:
         score = 0.0
 
         center_column = board.cols // 2
-        center_count = sum(1 for row in range(board.rows) if board.grid[row][center_column] == self.bot_color)
+        center_count = sum(1 for row in range(board.rows) if board.getCell(row, center_column) == self.bot_color)
         score += center_count * 4
-        center_count = sum(1 for row in range(board.rows) if board.grid[row][center_column] == self.opponent_color)
+        center_count = sum(1 for row in range(board.rows) if board.getCell(row, center_column) == self.opponent_color)
         score -= center_count * 4
 
         for row in range(board.rows):
             for column in range(board.cols):
-                cell = board.grid[row][column]
+                cell = board.getCell(row, column)
                 if cell is None:
                     continue
 
@@ -144,7 +140,7 @@ class BotEngine:
                         r = row + direction[0] * step
                         c = column + direction[1] * step
                         if 0 <= r < board.rows and 0 <= c < board.cols:
-                            window.append(board.grid[r][c])
+                            window.append(board.getCell(r, c))
                         else:
                             window.append(None)
 
