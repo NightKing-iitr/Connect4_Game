@@ -254,14 +254,10 @@ class Board:
     @property
     def cols(self):
         return self.__cols
-    
-    @property
-    def grid(self):
-        return self.__grid
 
     # Display colourful grid
     def display_grid(self):
-        for row in self.grid:
+        for row in self.__grid:
             colored_row = []
             for cell in row:
                 if cell == DiscColor.RED:
