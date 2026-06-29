@@ -172,7 +172,7 @@ class Game:
             raise ValueError("Players must be different.")
         
         if player1.color == player2.color:
-            raise ValueError("Players must chose different colors.") 
+            raise ValueError("Players must choose different colors.")
 
     @property
     def player1(self):
@@ -276,7 +276,7 @@ class Board:
             return False
         return True
 
-    def _getCell(self, row, column):
+    def getCell(self, row, column):
         return self.__grid[row][column]
 
     def isFull(self) -> bool:
@@ -315,7 +315,7 @@ class Board:
         if not self._in_bounds(row, column):
             return False 
         
-        if self._getCell(row, column) != color:
+        if self.getCell(row, column) != color:
             return False 
         
         directions = [
@@ -342,7 +342,7 @@ class Board:
 
         while (
             self._in_bounds(r, c) and 
-            self._getCell(r, c) == color
+            self.getCell(r, c) == color
         ):
             count += 1
             r += dr

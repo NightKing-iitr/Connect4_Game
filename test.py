@@ -38,12 +38,12 @@ except ValueError:
 
 game.makeMove(p1, 2)
 
-assert game.board._getCell(5, 2) == DiscColor.RED # Cell updated
+assert game.board.getCell(5, 2) == DiscColor.RED # Cell updated
 assert game.currentPlayer == p2 # Game turn switched to Player2 
 
 game.makeMove(p2, 2)
 
-assert game.board._getCell(4, 2) == DiscColor.BLUE # Place disk working 
+assert game.board.getCell(4, 2) == DiscColor.BLUE # Place disk working
 
 game.makeMove(p1, 2)
 game.makeMove(p2, 2)
