@@ -10,8 +10,8 @@ def main():
 
     args = parser.parse_args()
 
-    if not 1 <= args.depth <= 10:
-        parser.error("depth must be between 1 and 10")
+    if not 1 <= args.depth <= 8:
+        parser.error("depth must be between 1 and 8")
 
     max_depth = args.depth
     player_name = args.name
