@@ -123,6 +123,13 @@
 from enum import Enum
 from typing import Optional
 
+LINE_DIRECTIONS = (
+    (0, 1),   # Horizontal
+    (1, 0),   # Vertical
+    (1, 1),   # Diagonal
+    (-1, 1),  # Anti-diagonal
+)
+
 
 class DiscColor(Enum):
     RED = "Red" # Player1 color
@@ -332,14 +339,7 @@ class Board:
         if self.getCell(row, column) != color:
             return False 
         
-        directions = [
-            [0, 1], # Horizontal
-            [1, 0], # Vertical
-            [1, 1], # Diagonal
-            [-1, 1] # Anti-diagonal
-        ]
-
-        for dr, dc in directions:
+        for dr, dc in LINE_DIRECTIONS:
             count = 1
             count += self._countInDirection(row, column, dr, dc, color) 
             count += self._countInDirection(row, column, -dr, -dc, color) # Count in opposite direction
