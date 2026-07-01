@@ -72,6 +72,20 @@ game.board.display_grid() # Display game board
 print()
 
 
+# Validate Board.clearCell() for undo-move support
+undo_board = Board()
+undo_row = undo_board.placeDisc(0, DiscColor.RED)
+assert undo_row == 5
+assert undo_board.getCell(undo_row, 0) == DiscColor.RED
+assert undo_board.clearCell(undo_row, 0) == True
+assert undo_board.getCell(undo_row, 0) is None
+assert undo_board._canPlace(0) == True
+assert undo_board.clearCell(-1, 0) == False
+assert undo_board.clearCell(undo_board.rows, 0) == False
+
+print("Undo-move helper validated successfully.")
+print()
+
 
 # Validate GameState 'DRAW'
 draw_game = Game(Player("DrawPlayer1", DiscColor.RED), Player("DrawPlayer2", DiscColor.BLUE))
