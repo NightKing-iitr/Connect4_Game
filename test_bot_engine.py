@@ -178,6 +178,7 @@ def test_incremental_and_reference_bot_choose_same_move_on_fixed_positions(
         (2, GameState.WON, "ScriptedHuman", [3, 3, 3, 3, 4, 2, 4, 0, 0, 0, 6, 5]),
         (3, GameState.WON, "ScriptedHuman", [3, 4, 3, 2, 3, 1, 4, 5, 1, 5, 4, 4, 6, 6]),
         (5, GameState.WON, "ScriptedHuman", [3, 5, 2, 2, 2, 4, 1, 3, 0, 0, 5, 6, 2, 0, 6, 6, 6, 4]),
+        (8, GameState.WON, "ScriptedHuman", [3, 0, 3, 0, 3, 2, 4, 2, 3, 4, 5, 2, 0, 0, 0, 5, 1]),
         (8, GameState.DRAW, None, [3, 4, 3, 5, 6, 4, 6, 2, 1, 3, 0, 2, 1, 2, 4, 1, 6, 5, 6, 0, 0]),
     ],
 )
