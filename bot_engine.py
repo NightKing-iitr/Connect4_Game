@@ -37,12 +37,12 @@ class BotEngine:
         best_move = -1
 
         for column in self._ordered_columns(game_board):
-            board_copy = self._clone_board(game_board)
-            row = board_copy.placeDisc(column, self.bot_color)
+            row = game_board.placeDisc(column, self.bot_color)
             if row == -1:
                 continue
 
-            score = self._minimax(board_copy, self.max_depth - 1, False, float("-inf"), float("inf"))
+            score = self._minimax(game_board, self.max_depth - 1, False, float("-inf"), float("inf"))
+            game_board.clearCell(row, column)
             if score > best_score:
                 best_score = score
                 best_move = column
@@ -55,15 +55,13 @@ class BotEngine:
         return sorted([column for column in range(game_board.cols) 
                        if game_board._canPlace(column)], key=lambda column: abs(column - center))
 
-    def _clone_board(self, board: Board) -> Board:
-        return board.copy()
-
     def _would_win(self, board: Board, column: int, color: DiscColor) -> bool:
-        board_copy = self._clone_board(board)
-        row = board_copy.placeDisc(column, color)
+        row = board.placeDisc(column, color)
         if row == -1:
             return False
-        return board_copy.checkWin(row, column, color)
+        did_win = board.checkWin(row, column, color)
+        board.clearCell(row, column)
+        return did_win
 
     def _minimax(self, board: Board, depth: int, is_maximizing: bool, alpha: float, beta: float) -> float:
         if depth == 0 or board.isFull():
@@ -79,15 +77,16 @@ class BotEngine:
         if is_maximizing:
             best_score = float("-inf")
             for column in ordered_columns:
-                board_copy = self._clone_board(board)
-                row = board_copy.placeDisc(column, self.bot_color)
+                row = board.placeDisc(column, self.bot_color)
                 if row == -1:
                     continue
 
-                if board_copy.checkWin(row, column, self.bot_color):
+                if board.checkWin(row, column, self.bot_color):
+                    board.clearCell(row, column)
                     return 100000 + depth
 
-                score = self._minimax(board_copy, depth - 1, False, alpha, beta)
+                score = self._minimax(board, depth - 1, False, alpha, beta)
+                board.clearCell(row, column)
                 best_score = max(best_score, score)
                 alpha = max(alpha, score) # alpha-beta pruning
                 if beta <= alpha:
@@ -97,15 +96,16 @@ class BotEngine:
         # Human opponent trying to minimize the score 
         best_score = float("inf")
         for column in ordered_columns:
-            board_copy = self._clone_board(board)
-            row = board_copy.placeDisc(column, self.opponent_color)
+            row = board.placeDisc(column, self.opponent_color)
             if row == -1:
                 continue
 
-            if board_copy.checkWin(row, column, self.opponent_color):
+            if board.checkWin(row, column, self.opponent_color):
+                board.clearCell(row, column)
                 return -100000 - depth
 
-            score = self._minimax(board_copy, depth - 1, True, alpha, beta)
+            score = self._minimax(board, depth - 1, True, alpha, beta)
+            board.clearCell(row, column)
             best_score = min(best_score, score)
             beta = min(beta, score) # alpha-beta pruning
             if beta <= alpha:

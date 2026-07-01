@@ -310,6 +310,12 @@ class Board:
                 self.__grid[row][column] = color
                 return row
         return -1 
+
+    def clearCell(self, row: int, column: int) -> bool:
+        if not self._in_bounds(row, column):
+            return False
+        self.__grid[row][column] = None
+        return True
     
     def checkWin(self, row: int, column: int, color: DiscColor) -> bool:
         """
