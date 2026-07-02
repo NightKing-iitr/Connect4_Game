@@ -93,8 +93,8 @@ def test_board_clear_cell(game: Game):
         [
             [0, 1, 0, 1, 0, 1, 0], # Vertical 
             [0, 0, 1, 1, 2, 2, 3], # Horizontal
-            [0, 1, 1, 2, 2, 3, 2, 3, 3, 0, 3] # Diagonal
-            # Add anti-diagonal winning moves for 1st player
+            [0, 1, 1, 2, 2, 3, 2, 3, 3, 0, 3], # Diagonal
+            [3, 2, 2, 1, 0, 1, 1, 0, 4, 0, 0], # Anti-diagonal
         ]
 ) 
 def test_winning_moves(game: Game, moves: list[int]):

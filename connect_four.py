@@ -156,19 +156,6 @@ class Board:
     def cols(self):
         return self.__cols
 
-    # Display colourful grid
-    def display_grid(self):
-        for row in self.__grid:
-            colored_row = []
-            for cell in row:
-                if cell == DiscColor.RED:
-                    colored_row.append("\033[91mR\033[0m") # Red color
-                elif cell == DiscColor.BLUE:
-                    colored_row.append("\033[94mB\033[0m") # Blue color
-                else:
-                    colored_row.append("0")
-            print(" ".join(colored_row))
-
     def copy(self) -> 'Board':
         """Return an independent deep copy of this board."""
         clone = Board(self.__rows, self.__cols)
