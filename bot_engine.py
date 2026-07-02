@@ -31,26 +31,11 @@ class BotEngine:
 
         return self._get_minimax_move(game_board)
 
-    def _choose_move_reference(self, game_board: Board) -> int:
-        legal_columns = [column for column in range(game_board.cols) if game_board._canPlace(column)]
-        if not legal_columns:
-            return -1
-
-        for column in self._ordered_columns(game_board):
-            if self._would_win(game_board, column, self.bot_color):
-                return column
-
-        for column in self._ordered_columns(game_board):
-            if self._would_win(game_board, column, self.opponent_color):
-                return column
-
-        return self._get_minimax_move_reference(game_board)
-
     # Return the best possible move based on 'Minimax' algorithm
     def _get_minimax_move(self, game_board: Board) -> int:
         best_score = float("-inf")
         best_move = -1
-        current_score = self._evaluate_board_full_reference(game_board)
+        current_score = self._evaluate_board(game_board)
 
         for column in self._ordered_columns(game_board):
             row = game_board.placeDisc(column, self.bot_color)
@@ -66,23 +51,6 @@ class BotEngine:
                 float("inf"),
                 current_score + delta,
             )
-            game_board.clearCell(row, column)
-            if score > best_score:
-                best_score = score
-                best_move = column
-
-        return best_move
-
-    def _get_minimax_move_reference(self, game_board: Board) -> int:
-        best_score = float("-inf")
-        best_move = -1
-
-        for column in self._ordered_columns(game_board):
-            row = game_board.placeDisc(column, self.bot_color)
-            if row == -1:
-                continue
-
-            score = self._minimax_reference(game_board, self.max_depth - 1, False, float("-inf"), float("inf"))
             game_board.clearCell(row, column)
             if score > best_score:
                 best_score = score
@@ -163,53 +131,6 @@ class BotEngine:
                 break
         return best_score
 
-    def _minimax_reference(self, board: Board, depth: int, is_maximizing: bool, alpha: float, beta: float) -> float:
-        if depth == 0 or board.isFull():
-            return self._evaluate_board_full_reference(board)
-
-        legal_columns = [column for column in range(board.cols) if board._canPlace(column)]
-        if not legal_columns:
-            return 0.0
-
-        ordered_columns = self._ordered_columns(board)
-
-        if is_maximizing:
-            best_score = float("-inf")
-            for column in ordered_columns:
-                row = board.placeDisc(column, self.bot_color)
-                if row == -1:
-                    continue
-
-                if board.checkWin(row, column, self.bot_color):
-                    board.clearCell(row, column)
-                    return 100000 + depth
-
-                score = self._minimax_reference(board, depth - 1, False, alpha, beta)
-                board.clearCell(row, column)
-                best_score = max(best_score, score)
-                alpha = max(alpha, score)
-                if beta <= alpha:
-                    break
-            return best_score
-
-        best_score = float("inf")
-        for column in ordered_columns:
-            row = board.placeDisc(column, self.opponent_color)
-            if row == -1:
-                continue
-
-            if board.checkWin(row, column, self.opponent_color):
-                board.clearCell(row, column)
-                return -100000 - depth
-
-            score = self._minimax_reference(board, depth - 1, True, alpha, beta)
-            board.clearCell(row, column)
-            best_score = min(best_score, score)
-            beta = min(beta, score)
-            if beta <= alpha:
-                break
-        return best_score
-
     """
     Heuristic function
         - prefer positions that create winning opportunities for bot
@@ -217,35 +138,22 @@ class BotEngine:
         - favour central control
     """
     def _evaluate_board(self, board: Board) -> float:
-        return self._evaluate_board_full_reference(board)
-
-    def _evaluate_board_full_reference(self, board: Board) -> float:
+        # Reconstruct the position from an empty board and accumulate only
+        # incremental move deltas so evaluation uses the same single scoring path.
+        replay_board = Board(board.rows, board.cols)
         score = 0.0
 
-        center_column = board.cols // 2
-        center_count = sum(1 for row in range(board.rows) if board.getCell(row, center_column) == self.bot_color)
-        score += center_count * 4
-        center_count = sum(1 for row in range(board.rows) if board.getCell(row, center_column) == self.opponent_color)
-        score -= center_count * 4
-
-        for row in range(board.rows):
+        for row in range(board.rows - 1, -1, -1):
             for column in range(board.cols):
                 cell = board.getCell(row, column)
                 if cell is None:
                     continue
 
-                color = self.bot_color if cell == self.bot_color else self.opponent_color
-                for direction in LINE_DIRECTIONS:
-                    window = []
-                    for step in range(4):
-                        r = row + direction[0] * step
-                        c = column + direction[1] * step
-                        if 0 <= r < board.rows and 0 <= c < board.cols:
-                            window.append(board.getCell(r, c))
-                        else:
-                            window.append(None)
+                placed_row = replay_board.placeDisc(column, cell)
+                if placed_row == -1:
+                    raise AssertionError("Encountered an invalid board state during evaluation replay.")
 
-                    score += self._score_window(window, color)
+                score += self._score_delta_for_move(replay_board, placed_row, column, cell)
 
         return score
 

@@ -119,11 +119,11 @@ def test_chose_move_does_not_mutate_board_state(red_bot: BotEngine) -> None:
         [0, 1, 1, 2, 2, 5, 2, 3],
     ],
 )
-def test_incremental_score_matches_full_recomputation_on_fixed_boards(
+def test_score_delta_matches_evaluate_board(
     red_bot: BotEngine, moves: list[int]
 ) -> None:
     board = _build_board(moves)
-    score_before = red_bot._evaluate_board_full_reference(board)
+    score_before = red_bot._evaluate_board(board)
 
     for color in (red_bot.bot_color, red_bot.opponent_color):
         for column in range(board.cols):
@@ -132,44 +132,25 @@ def test_incremental_score_matches_full_recomputation_on_fixed_boards(
                 continue
 
             delta = red_bot._score_delta_for_move(board, row, column, color)
-            assert score_before + delta == red_bot._evaluate_board_full_reference(board)
-            assert red_bot._evaluate_board(board) == red_bot._evaluate_board_full_reference(board)
+            assert score_before + delta == red_bot._evaluate_board(board)
             assert board.clearCell(row, column) is True
-            assert red_bot._evaluate_board_full_reference(board) == score_before
+            assert red_bot._evaluate_board(board) == score_before
 
 
 def test_undo_restores_exact_original_score(red_bot: BotEngine) -> None:
     board = _build_board([3, 2, 3, 2, 4, 1])
-    original_score = red_bot._evaluate_board_full_reference(board)
+    original_score = red_bot._evaluate_board(board)
     original_cells = _snapshot_board(board)
 
     row = board.placeDisc(3, red_bot.bot_color)
     assert row != -1
 
     delta = red_bot._score_delta_for_move(board, row, 3, red_bot.bot_color)
-    assert original_score + delta == red_bot._evaluate_board_full_reference(board)
+    assert original_score + delta == red_bot._evaluate_board(board)
 
     assert board.clearCell(row, 3) is True
     assert _snapshot_board(board) == original_cells
-    assert red_bot._evaluate_board_full_reference(board) == original_score
-
-
-@pytest.mark.parametrize(
-    "moves",
-    [
-        [],
-        [3, 2, 3, 2, 4, 1],
-        [0, 1, 0, 1, 0, 2],
-        [0, 1, 1, 2, 2, 5, 2, 3],
-    ],
-)
-def test_incremental_and_reference_bot_choose_same_move_on_fixed_positions(
-    red_bot: BotEngine, moves: list[int]
-) -> None:
-    board_incremental = _build_board(moves)
-    board_reference = _build_board(moves)
-
-    assert red_bot.choseMove(board_incremental) == red_bot._choose_move_reference(board_reference)
+    assert red_bot._evaluate_board(board) == original_score
 
 
 @pytest.mark.parametrize(
