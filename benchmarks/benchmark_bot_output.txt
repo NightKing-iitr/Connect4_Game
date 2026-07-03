@@ -1,0 +1,87 @@
+Version: v2
+
+Context: Minimax engine (max-depth == 8) with alpha-beta pruning to find best moves for Bot.
+
+Improvements: 
+  - Shared game board for each node with undo move to clear last played move. No full reconstruction of board at each node.
+  - Incremental evaluation of score at each node. Delta score is added for each subsequent move.
+
+
+
+============================================================
+BENCHMARK 1: Depth scaling on an empty board
+  7 timed runs per depth, node counts are deterministic
+============================================================
+Depth        Nodes   xPrev    Mean ms   Std ms
+----------------------------------------------
+1                7       -        0.1      0.0
+2               56    8.0x        0.6      0.0
+3              175    3.1x        2.1      0.1
+4            1,067    6.1x       17.0      0.3
+5            3,782    3.5x       69.4     11.3
+6           18,582    4.9x      353.7      2.8
+7           64,484    3.5x     1400.7      9.6
+8          225,039    3.5x     6733.2     63.8
+
+
+============================================================
+BENCHMARK 2.1: Per-move time across a full game (depth=5)
+  Shows how move time drops as the board fills up.
+============================================================
+ Move Player    Col      Nodes       ms
+----------------------------------------
+    1 RED         3      3,782    108.0
+    2 BLUE        5      4,986    143.3
+    3 RED         3      2,291     67.8
+    4 BLUE        6      5,323    158.8
+    5 RED         1      1,747     54.1
+    6 BLUE        4      2,089     91.9
+    7 RED         3      1,896     59.6
+    8 BLUE        3          0      0.0
+    9 RED         2      4,284    136.1
+   10 BLUE        0          0      0.1
+   11 RED         2      3,095     97.1
+   12 BLUE        1      2,385     76.3
+   13 RED         2          0      0.1
+   14 BLUE        2          0      0.1
+   15 RED         4      3,947    131.5
+   16 BLUE        5          0      0.1
+   17 RED         4          0      0.1
+   18 BLUE        4          0      0.1
+   19 RED         1          0      0.0
+
+Result: Won - Red wins
+Note: Avg time per move for first 10 moves = 0.99secs
+
+
+============================================================
+BENCHMARK 2.2: Per-move time across a full game (depth=8)
+  Shows how move time drops as the board fills up.
+============================================================
+ Move Player    Col      Nodes       ms
+----------------------------------------
+    1 RED         3    225,039   6924.1
+    2 BLUE        4    326,663  10181.6
+    3 RED         2     70,904   2262.3
+    4 BLUE        4    459,326  14450.5
+    5 RED         2    105,262   3393.9
+    6 BLUE        4    260,099   8449.0
+    7 RED         4          0      0.1
+    8 BLUE        1    163,329   5454.8
+    9 RED         2     93,267   3055.8
+   10 BLUE        2          0      0.1
+   11 RED         1    131,084   4508.0
+   12 BLUE        5    229,772   8343.0
+   13 RED         1     50,919   1855.2
+   14 BLUE        5    132,374   4934.5
+   15 RED         1      6,571    238.8
+   16 BLUE        1          0      0.1
+   17 RED         2      3,997    146.4
+   18 BLUE        3     16,498    621.7
+   19 RED         3          0      0.1
+   20 BLUE        3     39,851   1421.3
+   21 RED         6          0      0.1
+   22 BLUE        6          0      0.0
+
+Result: Won - Blue wins
+Note: Avg time per move for first 10 moves = 6.7secs
