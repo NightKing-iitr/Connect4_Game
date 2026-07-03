@@ -1,7 +1,21 @@
 import argparse
 
-from connect_four import Game, Player, DiscColor, GameState
+from connect_four import Board, Game, Player, DiscColor, GameState
 from bot_engine import BotEngine
+
+
+def display_grid(board: Board) -> None:
+    for row in range(board.rows):
+        colored_row = []
+        for column in range(board.cols):
+            cell = board.getCell(row, column)
+            if cell == DiscColor.RED:
+                colored_row.append("\033[91mR\033[0m")
+            elif cell == DiscColor.BLUE:
+                colored_row.append("\033[94mB\033[0m")
+            else:
+                colored_row.append("0")
+        print(" ".join(colored_row))
 
 def main():
     parser = argparse.ArgumentParser(description="Play Connect4 against the bot")
@@ -45,7 +59,7 @@ def main():
             print(f"Bot chose column: {column}")
 
         game.makeMove(current, column)
-        game.board.display_grid()
+        display_grid(game.board)
         print()
 
     if game.state == GameState.DRAW:

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from connect_four import Board, DiscColor
+from connect_four import Board, DiscColor, LINE_DIRECTIONS
 
 
 class BotEngine:
@@ -35,14 +35,23 @@ class BotEngine:
     def _get_minimax_move(self, game_board: Board) -> int:
         best_score = float("-inf")
         best_move = -1
+        current_score = self._evaluate_board(game_board)
 
         for column in self._ordered_columns(game_board):
-            board_copy = self._clone_board(game_board)
-            row = board_copy.placeDisc(column, self.bot_color)
+            row = game_board.placeDisc(column, self.bot_color)
             if row == -1:
                 continue
 
-            score = self._minimax(board_copy, self.max_depth - 1, False, float("-inf"), float("inf"))
+            delta = self._score_delta_for_move(game_board, row, column, self.bot_color)
+            score = self._minimax(
+                game_board,
+                self.max_depth - 1,
+                False,
+                float("-inf"),
+                float("inf"),
+                current_score + delta,
+            )
+            game_board.clearCell(row, column)
             if score > best_score:
                 best_score = score
                 best_move = column
@@ -55,19 +64,25 @@ class BotEngine:
         return sorted([column for column in range(game_board.cols) 
                        if game_board._canPlace(column)], key=lambda column: abs(column - center))
 
-    def _clone_board(self, board: Board) -> Board:
-        return board.copy()
-
     def _would_win(self, board: Board, column: int, color: DiscColor) -> bool:
-        board_copy = self._clone_board(board)
-        row = board_copy.placeDisc(column, color)
+        row = board.placeDisc(column, color)
         if row == -1:
             return False
-        return board_copy.checkWin(row, column, color)
+        did_win = board.checkWin(row, column, color)
+        board.clearCell(row, column)
+        return did_win
 
-    def _minimax(self, board: Board, depth: int, is_maximizing: bool, alpha: float, beta: float) -> float:
+    def _minimax(
+        self,
+        board: Board,
+        depth: int,
+        is_maximizing: bool,
+        alpha: float,
+        beta: float,
+        current_score: float,
+    ) -> float:
         if depth == 0 or board.isFull():
-            return self._evaluate_board(board)
+            return current_score
 
         legal_columns = [column for column in range(board.cols) if board._canPlace(column)]
         if not legal_columns:
@@ -79,15 +94,17 @@ class BotEngine:
         if is_maximizing:
             best_score = float("-inf")
             for column in ordered_columns:
-                board_copy = self._clone_board(board)
-                row = board_copy.placeDisc(column, self.bot_color)
+                row = board.placeDisc(column, self.bot_color)
                 if row == -1:
                     continue
 
-                if board_copy.checkWin(row, column, self.bot_color):
+                if board.checkWin(row, column, self.bot_color):
+                    board.clearCell(row, column)
                     return 100000 + depth
 
-                score = self._minimax(board_copy, depth - 1, False, alpha, beta)
+                delta = self._score_delta_for_move(board, row, column, self.bot_color)
+                score = self._minimax(board, depth - 1, False, alpha, beta, current_score + delta)
+                board.clearCell(row, column)
                 best_score = max(best_score, score)
                 alpha = max(alpha, score) # alpha-beta pruning
                 if beta <= alpha:
@@ -97,15 +114,17 @@ class BotEngine:
         # Human opponent trying to minimize the score 
         best_score = float("inf")
         for column in ordered_columns:
-            board_copy = self._clone_board(board)
-            row = board_copy.placeDisc(column, self.opponent_color)
+            row = board.placeDisc(column, self.opponent_color)
             if row == -1:
                 continue
 
-            if board_copy.checkWin(row, column, self.opponent_color):
+            if board.checkWin(row, column, self.opponent_color):
+                board.clearCell(row, column)
                 return -100000 - depth
 
-            score = self._minimax(board_copy, depth - 1, True, alpha, beta)
+            delta = self._score_delta_for_move(board, row, column, self.opponent_color)
+            score = self._minimax(board, depth - 1, True, alpha, beta, current_score + delta)
+            board.clearCell(row, column)
             best_score = min(best_score, score)
             beta = min(beta, score) # alpha-beta pruning
             if beta <= alpha:
@@ -119,34 +138,74 @@ class BotEngine:
         - favour central control
     """
     def _evaluate_board(self, board: Board) -> float:
+        # Reconstruct the position from an empty board and accumulate only
+        # incremental move deltas so evaluation uses the same single scoring path.
+        replay_board = Board(board.rows, board.cols)
         score = 0.0
 
-        center_column = board.cols // 2
-        center_count = sum(1 for row in range(board.rows) if board.getCell(row, center_column) == self.bot_color)
-        score += center_count * 4
-        center_count = sum(1 for row in range(board.rows) if board.getCell(row, center_column) == self.opponent_color)
-        score -= center_count * 4
-
-        for row in range(board.rows):
+        for row in range(board.rows - 1, -1, -1):
             for column in range(board.cols):
                 cell = board.getCell(row, column)
                 if cell is None:
                     continue
 
-                color = self.bot_color if cell == self.bot_color else self.opponent_color
-                for direction in [(0, 1), (1, 0), (1, 1), (1, -1)]:
-                    window = []
-                    for step in range(4):
-                        r = row + direction[0] * step
-                        c = column + direction[1] * step
-                        if 0 <= r < board.rows and 0 <= c < board.cols:
-                            window.append(board.getCell(r, c))
-                        else:
-                            window.append(None)
+                placed_row = replay_board.placeDisc(column, cell)
+                if placed_row == -1:
+                    raise AssertionError("Encountered an invalid board state during evaluation replay.")
 
-                    score += self._score_window(window, color)
+                score += self._score_delta_for_move(replay_board, placed_row, column, cell)
 
         return score
+
+    def _center_score_for_cell(self, column: int, cell: Optional[DiscColor], board: Board) -> float:
+        if column != board.cols // 2 or cell is None:
+            return 0.0
+        return 4.0 if cell == self.bot_color else -4.0
+
+    def _window_score_from_anchor(self, board: Board, row: int, column: int, dr: int, dc: int) -> float:
+        anchor_cell = board.getCell(row, column)
+        if anchor_cell is None:
+            return 0.0
+
+        color = self.bot_color if anchor_cell == self.bot_color else self.opponent_color
+        window = []
+        for step in range(4):
+            next_row = row + dr * step
+            next_column = column + dc * step
+            if board._in_bounds(next_row, next_column):
+                window.append(board.getCell(next_row, next_column))
+            else:
+                window.append(None)
+        return self._score_window(window, color)
+
+    def _iter_affected_windows(self, board: Board, row: int, column: int):
+        for dr, dc in LINE_DIRECTIONS:
+            for offset in range(4):
+                start_row = row - dr * offset
+                start_column = column - dc * offset
+
+                if not board._in_bounds(start_row, start_column):
+                    continue
+
+                yield start_row, start_column, dr, dc
+
+    def _score_delta_for_move(self, board: Board, row: int, column: int, color: DiscColor) -> float:
+        after_score = self._center_score_for_cell(column, color, board)
+        affected_windows = list(self._iter_affected_windows(board, row, column))
+        for start_row, start_column, dr, dc in affected_windows:
+            after_score += self._window_score_from_anchor(board, start_row, start_column, dr, dc)
+
+        board.clearCell(row, column)
+
+        before_score = self._center_score_for_cell(column, board.getCell(row, column), board)
+        for start_row, start_column, dr, dc in affected_windows:
+            before_score += self._window_score_from_anchor(board, start_row, start_column, dr, dc)
+
+        restored_row = board.placeDisc(column, color)
+        if restored_row != row:
+            raise AssertionError("Failed to restore board state while computing score delta.")
+
+        return after_score - before_score
 
     def _score_window(self, window: list[Optional[DiscColor]], color: DiscColor) -> float:
         opponent = self.opponent_color if color == self.bot_color else self.bot_color
