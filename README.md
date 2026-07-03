@@ -17,7 +17,6 @@ A small Python Connect Four implementation with a CLI game and a minimax bot.
 From the repository root:
 
 ```bash
-docker run 
 python3 game_loop.py --name Alex --depth 3
 ```
 
